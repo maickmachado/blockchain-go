@@ -16,7 +16,7 @@ type Block struct {
 	PrevHash []byte
 }
 
-//método que permite criar um novo HASH baseado no HASH anterior e no dados (DATA)
+//método que permite criar um novo HASH baseado no HASH anterior e no dados (DATA).
 func (b *Block) DeriveHash() {
 	//concatena as informações contidas no Data e PrevHash e usa o []byte como separador
 	//[][]byte contem vários slice of bytes, no caso abaixo o [][]byte é formado pelos slices of bytes do struct Block
