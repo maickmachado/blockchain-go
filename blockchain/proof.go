@@ -8,6 +8,8 @@ import (
 	"log"
 	"math"
 	"math/big"
+
+	"github.com/maickmachado/blockchain-go/entities"
 )
 
 // take the data from block
@@ -25,15 +27,16 @@ import (
 const Difficulty = 18
 
 type ProofOfWork struct {
-	Block *Block
+	Block *entities.Block
 	//representa o requirements que é derivado do Difficulty
 	Target *big.Int
 }
 
 //popula o proof of work struct com o block recebido e o target criado
-func NewProof(b *Block) *ProofOfWork {
-	target := big.NewInt(1)
+func NewProof(b *entities.Block) *ProofOfWork {
+	target := big.NewInt(1) //1
 	// pega o numero 256 que é o numero de bytes no hash
+	// 32
 	// vamos usar o target para trocar o número de bytes pelo número uint(256 - Difficulty)
 	// Lsh = left shift
 	//So n << x is "n times 2, x times". And y >> z is "y divided by 2, z times".
@@ -43,6 +46,7 @@ func NewProof(b *Block) *ProofOfWork {
 	//Given integer operands a and n,
 	//a << n; shifts all bits in a to the left n times
 	//a >> n; shifts all bits in a to the right n times
+	//uint(256-Difficulty) = 2^238 = 441711766194596082395824375185729628956870974218904739530401550323154944
 	target.Lsh(target, uint(256-Difficulty))
 	//coloca o Block recebido no parametro e o target modificado
 	pow := &ProofOfWork{b, target}
@@ -83,7 +87,7 @@ func ToHex(num int64) []byte {
 	return buff.Bytes()
 }
 
-// check the hash to see if it meets a set of requirements
+//faz um loop incrementando o hash até chega no requerimento
 func (pow *ProofOfWork) Run() (int, []byte) {
 	var intHash big.Int
 	var hash [32]byte
@@ -95,7 +99,8 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	for nonce < math.MaxInt64 {
 		//retorna um slice of bytes com tudo concatenado usando o nonce indicado
 		data := pow.InitData(nonce)
-		//pego do data e transformo em um has do tipo sha256
+		//pego do data e transformo em um hash do tipo sha256
+		//32 "pedaços" - 32 * 8 bytes = 256
 		//a função Sum256 faz o calculo do hash
 		hash = sha256.Sum256(data)
 		//%x	hexadecimal notation - base 16, with lower-case letters for a-f
@@ -103,9 +108,9 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 		//converte o hash em um big integer
 		intHash.SetBytes(hash[:])
 		//compara o proof of work target com o novo big int criado o intHash
+		//a comparação é pra ver se chegou no requerimento
 		if intHash.Cmp(pow.Target) == -1 {
-			//break porque o hash é menor do que o target
-			//e isso significa que é o hash correto
+			//break porque o hash passou o valor do requisito
 			break
 		} else {
 			nonce++

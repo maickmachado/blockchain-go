@@ -1,27 +1,29 @@
 package blockchain
 
+import "github.com/maickmachado/blockchain-go/entities"
+
 type BlockChain struct {
-	Blocks []*Block
+	Blocks []*entities.Block
 }
 
-type Block struct {
-	//parametros que são informados
-	Data     []byte
-	PrevHash []byte
-	//parametros que são obtidos
-	Hash  []byte
-	Nonce int
-}
+// type Block struct {
+// 	//parametros que são informados
+// 	Data     []byte
+// 	PrevHash []byte
+// 	//parametros que são obtidos
+// 	Hash  []byte
+// 	Nonce int
+// }
 
 //recebe alguns dados o hash anterior e retorna um pointer para o struct Block
-func CreateBlock(data string, prevHash []byte) *Block {
+func CreateBlock(data string, prevHash []byte) *entities.Block {
 	//um novo block é criado usando o struct Block
 	//block := constructor{}
 
 	//para o campo Hash é passado um []byte vazio
 	//para o campo Data nós pegamos o argumento string data e convertemos para um []byte
 	//para o campo PrevHash nós colocamos o prevHash que é passado como argumento
-	block := &Block{
+	block := &entities.Block{
 		Hash:     []byte{},
 		Data:     []byte(data),
 		PrevHash: prevHash,

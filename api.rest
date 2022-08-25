@@ -1,0 +1,39 @@
+@host = localhost:8080
+
+// Create Product
+POST http://{{host}}/blockchain HTTP/1.1
+content-type: application/json
+    
+{
+    "initial_data": "teste"
+}
+
+###
+
+// Get Product By ID
+GET http://{{host}}/api/pokemons/158 HTTP/1.1
+content-type: application/json
+
+###
+
+// Get All Products
+GET http://{{host}}/blockchain HTTP/1.1
+content-type: application/json
+
+###
+
+// Update Product
+PUT http://{{host}}/api/pokemons/1 HTTP/1.1
+content-type: application/json
+
+{
+    "name": "updated-product",
+    "description": "random-description-updated",
+    "price": 100.00
+}
+
+###
+
+// Delete Product
+DELETE http://{{host}}/api/pokemons/1 HTTP/1.1
+content-type: application/json
