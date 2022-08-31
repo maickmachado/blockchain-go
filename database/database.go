@@ -27,6 +27,15 @@ func Connect(connectionString string) {
 //função que assegura que a tabela do banco de dados será igual ao struct criado
 func Migrate() {
 	blockDataBase := &entities.Block{}
-	Instance.AutoMigrate(blockDataBase)
+	transactionsDataBase := &entities.Transaction{}
+	txOutputDataBase := &entities.TxOutput{}
+	txInputDataBase := &entities.TxInput{}
+	// Instance.Migrator().CreateTable(blockDataBase, transactionsDataBase, txOutputDataBase, txInputDataBase)
+	Instance.AutoMigrate(blockDataBase, transactionsDataBase, txOutputDataBase, txInputDataBase)
+
+	//Instance.Model(blockDataBase).AddForeignKey
+	//Instance.Model(transactionsDataBase).Association(clause.Associations)
+	// Instance.Model(txOutputDataBase).Association(clause.Associations)
+	// Instance.Model(txInputDataBase).Association(clause.Associations)
 	log.Println("Database Migration Completed...")
 }

@@ -2,35 +2,54 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/maickmachado/blockchain-go/blockchain"
 	"github.com/maickmachado/blockchain-go/database"
 	"github.com/maickmachado/blockchain-go/entities"
-	"gorm.io/gorm"
+	"github.com/maickmachado/blockchain-go/transactions"
+	"gorm.io/gorm/clause"
 )
 
-func CreateDataBlock(w http.ResponseWriter, r *http.Request) {
+// type BlockChain struct {
+// 	Blocks []*entities.Block
+// }
+
+func NewTransaction(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func GetBalanceAddress(w http.ResponseWriter, r *http.Request) {
+	address := mux.Vars(r)["address"]
+
+	balance := 0
+	UTXOs := transactions.FindUTXO(address)
+
+	for _, out := range UTXOs {
+		balance += out.Value
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(fmt.Sprintf("Balance of %s: %d\n", address, balance))
+}
+
+func CreateGenesisBlock(w http.ResponseWriter, r *http.Request) {
 	//define o estilo que os dados serão mostrados em w
 	//w.Header().Set("Content-Type", "application/json")
 	//cria uma variável do tipo Product do pacote entities
-	var block entities.JsonBlock
-
-	json.NewDecoder(r.Body).Decode(&block)
+	var inputData entities.GenesisData
+	json.NewDecoder(r.Body).Decode(&inputData)
 	//ver se os dados que estão no firstBlock impacta no find se não usar ele em vez da var oquesera
 	//com * retorna nil
-
 	// var result int64
 	// database.Instance.Table("blocks").Count(&result)
-
 	// database.Instance.Table("blocks").Last()
-
-	var lastBlock entities.Block
-
-	newBlock := &entities.Block{
+	newBlock := entities.Block{
 		Hash:     []byte{},
-		Data:     []byte(block.InitialData),
 		PrevHash: []byte(""),
 		Nonce:    0,
 	}
@@ -39,33 +58,47 @@ func CreateDataBlock(w http.ResponseWriter, r *http.Request) {
 	//tentar incluir um time pra puxar o ultimo com base no time
 	//"CreatedAt": "2022-08-24T17:13:58.611-03:00", igual gom.Model
 	//usar len para pegar o ultimo item
-	blockIsData := database.Instance.Last(&lastBlock)
+	genesisData := "First Transaction from Genesis"
 
-	//retirar essa função e colocar numa nova
-	if errors.Is(blockIsData.Error, gorm.ErrRecordNotFound) {
+	firstTransaction := transactions.CoinBaseTx(inputData.Address, genesisData)
+	//da pra usar for range no lugar de append
+	//newBlock.Transactions = append(newBlock.Transactions, firstTransaction)
 
-		pow := blockchain.NewProof(newBlock)
-		nonce, hash := pow.Run()
-		newBlock.Hash = hash[:]
-		newBlock.Nonce = nonce
+	pow := blockchain.NewProof(&newBlock)
+	nonce, hash := pow.Run(firstTransaction)
 
-		database.Instance.Create(&newBlock)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(newBlock)
-
-		return
-	}
-
-	newBlock.PrevHash = lastBlock.Hash
-
-	pow := blockchain.NewProof(newBlock)
-	nonce, hash := pow.Run()
 	newBlock.Hash = hash[:]
 	newBlock.Nonce = nonce
 
 	database.Instance.Create(&newBlock)
+
+	var transactionDatabase entities.Transaction
+	transactionDatabase.TransactionsRefe = firstTransaction.TransactionsRefe
+
+	transactionDatabase.TransactionHash = hash[:]
+	// fmt.Println(transactionDatabase.TransactionHash)
+	database.Instance.Create(&transactionDatabase)
+
+	//criação do banco de dados output
+	var outputDatabase entities.TxOutput
+	outputDatabase.TxOutputID = transactionDatabase.TransactionsRefe
+	for _, value := range firstTransaction.Outputs {
+		outputDatabase.Value = value.Value
+		outputDatabase.PubKey = value.PubKey
+		database.Instance.Create(&outputDatabase)
+	}
+	//criação do banco de dados input
+	var inputDatabase entities.TxInput
+	inputDatabase.TxInputID = transactionDatabase.TransactionsRefe
+	for _, value := range firstTransaction.Inputs {
+		inputDatabase.TxInputRefe = value.TxInputRefe
+		inputDatabase.Out = value.Out
+		inputDatabase.Sig = value.Sig
+		database.Instance.Create(&inputDatabase)
+	}
+
+	// database.Instance.Create(&firstTransaction.Outputs)
+	// database.Instance.Create(&firstTransaction.Inputs)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -76,7 +109,8 @@ func GetAllData(w http.ResponseWriter, r *http.Request) {
 
 	var block []entities.Block
 
-	database.Instance.Find(&block)
+	//database.Instance.Model(&entities.Block{}).Preload("Transaction").Find(&block)
+	database.Instance.Preload(clause.Associations).Preload("Transactions." + clause.Associations).Find(&block)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -166,4 +200,74 @@ func GetAllData(w http.ResponseWriter, r *http.Request) {
 // 	//GORM acessa o banco de dados e deleta o product
 // 	database.Instance.Delete(&pokemon, pokemonId)
 // 	json.NewEncoder(w).Encode("Pokemon deletado com sucesso!")
+// }
+
+// //será chamado de CreateBlockchain
+// //será necessário separar as funções
+// func Teste(w http.ResponseWriter, r *http.Request) {
+// 	//define o estilo que os dados serão mostrados em w
+// 	//w.Header().Set("Content-Type", "application/json")
+// 	//cria uma variável do tipo Product do pacote entities
+// 	var block entities.JsonBlock
+// 	json.NewDecoder(r.Body).Decode(&block)
+// 	//ver se os dados que estão no firstBlock impacta no find se não usar ele em vez da var oquesera
+// 	//com * retorna nil
+
+// 	// var result int64
+// 	// database.Instance.Table("blocks").Count(&result)
+
+// 	// database.Instance.Table("blocks").Last()
+
+// 	var lastBlock entities.Block
+
+// 	newBlock := &entities.Block{
+// 		Hash:         []byte{},
+// 		Transactions: []entities.Transaction{},
+// 		PrevHash:     []byte(""),
+// 		Nonce:        0,
+// 	}
+// 	//VERIFICAR SE PRECISA ESPECIFICAR OU QUAL ELE CONSIDERA O ULTIMO SE ELE DA UM ID AUTOMATICO
+// 	//com um mesmo data ele puxa
+// 	//tentar incluir um time pra puxar o ultimo com base no time
+// 	//"CreatedAt": "2022-08-24T17:13:58.611-03:00", igual gom.Model
+// 	//usar len para pegar o ultimo item
+// 	blockIsData := database.Instance.Last(&lastBlock)
+
+// 	//para quando não existe dados no banco de dados
+// 	if errors.Is(blockIsData.Error, gorm.ErrRecordNotFound) {
+
+// 		genesisData := "First Transaction from Genesis"
+
+// 		firstTransaction := transactions.CoinBaseTx(block.Address, genesisData)
+// 		//da pra usar for range no lugar de append
+// 		newBlock.Transactions = append(newBlock.Transactions, *firstTransaction)
+// 		pow := blockchain.NewProof(newBlock)
+// 		nonce, hash := pow.Run()
+// 		newBlock.Hash = hash[:]
+// 		newBlock.Nonce = nonce
+
+// 		database.Instance.Create(&newBlock)
+
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.WriteHeader(http.StatusOK)
+// 		json.NewEncoder(w).Encode(newBlock)
+
+// 		return
+// 	}
+
+// 	newBlock.PrevHash = lastBlock.Hash
+// 	//modificar essa parte para aceitar transações externas
+// 	transactions := transactions.CoinBaseTx(block.Address, block.InitialData)
+// 	newBlock.Transactions = append(newBlock.Transactions, *transactions)
+
+// 	pow := blockchain.NewProof(newBlock)
+// 	nonce, hash := pow.Run()
+// 	newBlock.Hash = hash[:]
+// 	newBlock.Nonce = nonce
+
+// 	database.Instance.Create(&newBlock)
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(http.StatusOK)
+// 	json.NewEncoder(w).Encode(newBlock)
 // }

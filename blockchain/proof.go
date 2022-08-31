@@ -54,7 +54,7 @@ func NewProof(b *entities.Block) *ProofOfWork {
 }
 
 //nonce é um counter
-func (pow *ProofOfWork) InitData(nonce int) []byte {
+func (pow *ProofOfWork) InitData(nonce int, t *entities.Transaction) []byte {
 	//concatena as informações contidas no Data e PrevHash e usa um []byte{} como separador
 	//[][]byte{} contem vários slice of bytes, no caso abaixo o [][]byte é formado pelos slices of bytes do struct Block
 	//b.Data e b.PrevHash - ambos []bytes
@@ -62,7 +62,7 @@ func (pow *ProofOfWork) InitData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
-			pow.Block.Data,
+			pow.Block.HashTransaction(t),
 			ToHex(int64(nonce)),
 			ToHex(int64(Difficulty)),
 		},
@@ -88,7 +88,7 @@ func ToHex(num int64) []byte {
 }
 
 //faz um loop incrementando o hash até chega no requerimento
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run(t *entities.Transaction) (int, []byte) {
 	var intHash big.Int
 	var hash [32]byte
 
@@ -98,7 +98,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	//depois comparar esse big integer com o big integer que está dentro do proof of work struct
 	for nonce < math.MaxInt64 {
 		//retorna um slice of bytes com tudo concatenado usando o nonce indicado
-		data := pow.InitData(nonce)
+		data := pow.InitData(nonce, t)
 		//pego do data e transformo em um hash do tipo sha256
 		//32 "pedaços" - 32 * 8 bytes = 256
 		//a função Sum256 faz o calculo do hash
@@ -123,13 +123,13 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 //após rodar a função do proof of work, Run
 //obteremos o nonce que permiterá obter o correto hash de acordo com o target
 //após isso iremos rodar novamente para provar que o hash é válido
-func (pow *ProofOfWork) Validate() bool {
-	var intHash big.Int
+// func (pow *ProofOfWork) Validate() bool {
+// 	var intHash big.Int
 
-	data := pow.InitData(pow.Block.Nonce)
+// 	data := pow.InitData(pow.Block.Nonce,)
 
-	hash := sha256.Sum256(data)
-	intHash.SetBytes(hash[:])
+// 	hash := sha256.Sum256(data)
+// 	intHash.SetBytes(hash[:])
 
-	return intHash.Cmp(pow.Target) == -1
-}
+// 	return intHash.Cmp(pow.Target) == -1
+// }
