@@ -23,13 +23,13 @@ content-type: application/json
 ###
 
 // Update Product
-PUT http://{{host}}/api/pokemons/1 HTTP/1.1
+POST http://{{host}}/blockchain/transactions HTTP/1.1
 content-type: application/json
 
 {
-    "name": "updated-product",
-    "description": "random-description-updated",
-    "price": 100.00
+    "from": "maick",
+    "to": "jean",
+    "amount": 80
 }
 
 ###

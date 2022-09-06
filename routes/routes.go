@@ -5,15 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/maickmachado/blockchain-go/controllers"
+	"github.com/maickmachado/blockchain-go/blockchain/controllers"
 )
 
 func HandleRequest() {
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.HandleFunc("/blockchain", controllers.CreateGenesisBlock).Methods("POST")
 	myRouter.HandleFunc("/blockchain", controllers.GetAllData).Methods("GET")
 	myRouter.HandleFunc("/blockchain/balance/{address}", controllers.GetBalanceAddress).Methods("GET")
+	myRouter.HandleFunc("/blockchain/transactions", controllers.NewTransaction).Methods("POST")
 	// myRouter.HandleFunc("/api/pokemons/{id}", controllers.GetPokemonById).Methods("GET")
-	myRouter.HandleFunc("/blockchain", controllers.CreateGenesisBlock).Methods("POST")
 	// myRouter.HandleFunc("/api/pokemons/{id}", controllers.UpdateDataPokemon).Methods("PUT")
 	// myRouter.HandleFunc("/api/pokemons/{id}", controllers.DeleteDataPokemon).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":8080", myRouter))

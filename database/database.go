@@ -3,7 +3,7 @@ package database
 import (
 	"log"
 
-	"github.com/maickmachado/blockchain-go/entities"
+	"github.com/maickmachado/blockchain-go/blockchain/entities"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
