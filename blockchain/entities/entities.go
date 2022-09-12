@@ -25,7 +25,7 @@ type InputTransaction struct {
 //e tem que ter pelo menos uma
 type Block struct {
 	//testar e ver se o é necessário
-	//ID           int            `json:"id" gorm:"primaryKey;AUTO_INCREMENT"`
+	CounterBlock int            `json:"counter_block" sql:"AUTO_INCREMENT"`
 	Hash         []byte         `json:"hash" gorm:"primaryKey;size:255"`
 	Nonce        int            `json:"nonce"`
 	Transactions []*Transaction `json:"transactions" gorm:"foreignKey:TransactionHash;references:Hash"`
@@ -34,7 +34,9 @@ type Block struct {
 
 type Transaction struct {
 	//ID               int         `json:"id" gorm:"primaryKey;AUTO_INCREMENT"`
-	TransactionHash  []byte      `json:"transaction_hash" gorm:"size:255"`
+	//TransactionHash faz referencia ao HASH de Block
+	TransactionHash []byte `json:"transaction_hash" gorm:"size:255"`
+	//TransactionsRefe faz referencia a TxOutputID e TxInputID
 	TransactionsRefe []byte      `json:"transactions_refe" gorm:"primaryKey;size:255"`
 	Outputs          []*TxOutput `json:"outputs" gorm:"foreignKey:TxOutputID;references:TransactionsRefe"`
 	Inputs           []*TxInput  `json:"inputs" gorm:"foreignKey:TxInputID;references:TransactionsRefe"`
@@ -58,6 +60,8 @@ type TxOutput struct {
 type TxInput struct {
 	TxInputID []byte `json:"txinput_id" gorm:"size:255"`
 	//referencia a transação que o outputs está contido
+	//mesma função do TxinputID
+	//para achar o input correto usa transação (txinputref x - out y) - transação x no index y
 	TxInputRefe []byte `json:"txinput_refe" gorm:"size:255"`
 	//index de onde o output aparece na transação
 	Out int `json:"out"`
@@ -110,7 +114,8 @@ func (tx *Transaction) SetOutputID() {
 }
 
 //hash que representa todas as transações combinadas
-func (b *Block) HashTransaction(t *Transaction) []byte {
+//TransactionRefe
+func (b *Block) HashTransaction() []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
 

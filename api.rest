@@ -28,8 +28,8 @@ content-type: application/json
 
 {
     "from": "maick",
-    "to": "jean",
-    "amount": 80
+    "to": "marcos",
+    "amount": 3
 }
 
 ###

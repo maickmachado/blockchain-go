@@ -35,9 +35,9 @@ func CoinBaseTx(to, data string) *entities.Transaction {
 	}
 
 	tx := entities.Transaction{
-		//TransactionsRefe: nil,
-		Inputs:  []*entities.TxInput{&txin},
-		Outputs: []*entities.TxOutput{&txout},
+		TransactionsRefe: nil,
+		Inputs:           []*entities.TxInput{&txin},
+		Outputs:          []*entities.TxOutput{&txout},
 	}
 	tx.SetID()
 	tx.SetInputID()
@@ -57,6 +57,9 @@ func NewTransaction(from, to string, amount int) *entities.Transaction {
 
 	acc, validOutputs := FindSpendebleOutputs(from, amount)
 
+	fmt.Println("acc in transaction:", acc)
+	fmt.Println("validOutputs in transaction:", validOutputs)
+
 	if acc < amount {
 		log.Panic("Error: not enough funds")
 	}
@@ -67,10 +70,13 @@ func NewTransaction(from, to string, amount int) *entities.Transaction {
 		for _, out := range outs {
 			//cria os inputs para os fundos outputs que serão usado
 			input := entities.TxInput{
+				//AQUI ESTA O ERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRROOOOOOOO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				//NÃO REFERENCIA AO GENESIS E SIM AO NUMERO ZERO
 				TxInputRefe: txID,
 				Out:         out,
 				Sig:         from,
 			}
+			//CADASTRAR NO BANCO DE DADOS!!!!!!!!
 			inputs = append(inputs, &input)
 		}
 	}
@@ -86,7 +92,7 @@ func NewTransaction(from, to string, amount int) *entities.Transaction {
 			PubKey: from,
 		})
 	}
-
+	//CADASTRAR NO BANCO DE DADOS!!!!!!!!
 	tx := entities.Transaction{
 		TransactionsRefe: nil,
 		Inputs:           inputs,

@@ -54,7 +54,7 @@ func NewProof(b *entities.Block) *ProofOfWork {
 }
 
 //nonce é um counter
-func (pow *ProofOfWork) InitData(nonce int, t *entities.Transaction) []byte {
+func (pow *ProofOfWork) InitData(nonce int) []byte {
 	//concatena as informações contidas no Data e PrevHash e usa um []byte{} como separador
 	//[][]byte{} contem vários slice of bytes, no caso abaixo o [][]byte é formado pelos slices of bytes do struct Block
 	//b.Data e b.PrevHash - ambos []bytes
@@ -62,7 +62,7 @@ func (pow *ProofOfWork) InitData(nonce int, t *entities.Transaction) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
-			pow.Block.HashTransaction(t),
+			pow.Block.HashTransaction(),
 			ToHex(int64(nonce)),
 			ToHex(int64(Difficulty)),
 		},
@@ -88,7 +88,7 @@ func ToHex(num int64) []byte {
 }
 
 //faz um loop incrementando o hash até chega no requerimento
-func (pow *ProofOfWork) Run(t *entities.Transaction) (int, []byte) {
+func (pow *ProofOfWork) Run() (int, []byte) {
 	var intHash big.Int
 	var hash [32]byte
 
@@ -96,9 +96,11 @@ func (pow *ProofOfWork) Run(t *entities.Transaction) (int, []byte) {
 	//irá preparar nossos dados (data) e transformar num hash sha256
 	//depois converter esse hash em um big integer
 	//depois comparar esse big integer com o big integer que está dentro do proof of work struct
+	//por que nao usar somente o for {..}
+	//por que ele usa um Maxint64, faz diferença?
 	for nonce < math.MaxInt64 {
 		//retorna um slice of bytes com tudo concatenado usando o nonce indicado
-		data := pow.InitData(nonce, t)
+		data := pow.InitData(nonce)
 		//pego do data e transformo em um hash do tipo sha256
 		//32 "pedaços" - 32 * 8 bytes = 256
 		//a função Sum256 faz o calculo do hash
@@ -109,6 +111,8 @@ func (pow *ProofOfWork) Run(t *entities.Transaction) (int, []byte) {
 		intHash.SetBytes(hash[:])
 		//compara o proof of work target com o novo big int criado o intHash
 		//a comparação é pra ver se chegou no requerimento
+		//colocar como comentário a lógica matemática para == -1
+		//se não me engano é só diminuir o target de alguma coisa
 		if intHash.Cmp(pow.Target) == -1 {
 			//break porque o hash passou o valor do requisito
 			break
