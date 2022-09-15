@@ -29,20 +29,25 @@ func NewTransaction(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("last block in new transaction:", block)
 
+	blockIndex := entities.BlockIndex(lastCounter, block)
+
 	newBlock := entities.Block{
 		CounterBlock: lastCounter + 1,
 		Hash:         []byte{},
-		PrevHash:     block[lastCounter-1].Hash,
+		PrevHash:     block[blockIndex].Hash,
 		Nonce:        0,
 	}
 
+	transactions := transactions.NewTransaction(inputData.From, inputData.To, inputData.Amount)
+	var allTransactions []*entities.Transaction
+	allTransactions = append(allTransactions, transactions)
+
 	pow := proof.NewProof(&newBlock)
-	nonce, hash := pow.Run()
+	nonce, hash := pow.Run(allTransactions)
 
 	newBlock.Hash = hash[:]
 	newBlock.Nonce = nonce
 
-	transactions := transactions.NewTransaction(inputData.From, inputData.To, inputData.Amount)
 	//ok
 	fmt.Println("new transactions in new transaction:", transactions)
 
@@ -126,7 +131,11 @@ func CreateGenesisBlock(w http.ResponseWriter, r *http.Request) {
 	//newBlock.Transactions = append(newBlock.Transactions, firstTransaction)
 
 	pow := proof.NewProof(&newBlock)
-	nonce, hash := pow.Run()
+
+	var allTransactions []*entities.Transaction
+	allTransactions = append(allTransactions, firstTransaction)
+
+	nonce, hash := pow.Run(allTransactions)
 
 	newBlock.Hash = hash[:]
 	newBlock.Nonce = nonce

@@ -54,7 +54,7 @@ func NewProof(b *entities.Block) *ProofOfWork {
 }
 
 //nonce é um counter
-func (pow *ProofOfWork) InitData(nonce int) []byte {
+func (pow *ProofOfWork) InitData(nonce int, transactions []*entities.Transaction) []byte {
 	//concatena as informações contidas no Data e PrevHash e usa um []byte{} como separador
 	//[][]byte{} contem vários slice of bytes, no caso abaixo o [][]byte é formado pelos slices of bytes do struct Block
 	//b.Data e b.PrevHash - ambos []bytes
@@ -62,7 +62,8 @@ func (pow *ProofOfWork) InitData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
-			pow.Block.HashTransaction(),
+			//NÃO ESTA SENDO UTILIZADO NÃO TEM NADA
+			entities.HashTransaction(transactions),
 			ToHex(int64(nonce)),
 			ToHex(int64(Difficulty)),
 		},
@@ -88,7 +89,7 @@ func ToHex(num int64) []byte {
 }
 
 //faz um loop incrementando o hash até chega no requerimento
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run(transactions []*entities.Transaction) (int, []byte) {
 	var intHash big.Int
 	var hash [32]byte
 
@@ -100,7 +101,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	//por que ele usa um Maxint64, faz diferença?
 	for nonce < math.MaxInt64 {
 		//retorna um slice of bytes com tudo concatenado usando o nonce indicado
-		data := pow.InitData(nonce)
+		data := pow.InitData(nonce, transactions)
 		//pego do data e transformo em um hash do tipo sha256
 		//32 "pedaços" - 32 * 8 bytes = 256
 		//a função Sum256 faz o calculo do hash

@@ -115,14 +115,24 @@ func (tx *Transaction) SetOutputID() {
 
 //hash que representa todas as transações combinadas
 //TransactionRefe
-func (b *Block) HashTransaction() []byte {
+func HashTransaction(transactions []*Transaction) []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
 
-	for _, value := range b.Transactions {
+	for _, value := range transactions {
 		txHashes = append(txHashes, value.TransactionsRefe)
 	}
 	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
 
 	return txHash[:]
+}
+
+func BlockIndex(counter int, block []Block) int {
+	var indexBlock int
+	for index, value := range block {
+		if value.CounterBlock == counter {
+			indexBlock = index
+		}
+	}
+	return indexBlock
 }
